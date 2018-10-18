@@ -142,6 +142,18 @@ class RunTable (Table):
         self.statusTable = StatusTable(dbh, readOnly)
         self.hostTable = StatusTable(dbh, readOnly)
     
+    def getId (self, *data):
+        if (len(data) != self.dataSize):
+            raise TypeError("getId is expecting %d arguments and got %d." %(self.dataSize, len(data)))
+
+        (host, timestamp) = data
+
+        hostId = self.hostTable.getId(host)
+
+        runId = super(RunTable, self).getId(hostId, timestamp)
+
+        self.updateStatus(runId, "Setup")
+        
     def updateStatus (self, runId, status):
         if (isinstance(status, int)):
             statusId = status
@@ -236,7 +248,7 @@ class FileTable (Table):
         "DROP TABLE IF EXISTS file"
     ]
 
-    getExistingRecord_select = "SELECT s.filesha FROM filesha s, file f, run r WHERE r.host_id = ? AND f.filepath_id = ? AND f.filesize = ? AND f.run_id = r.id AND s.id = f.filesha_id ORDER BY run.starttime DESC LIMIT 1"
+    getExistingRecord_select = "SELECT s.filesha FROM filesha s, file f, run r WHERE r.host_id = ? AND f.filepath_id = ? AND f.filesize = ? AND f.filetime = ? AND f.run_id = r.id AND s.id = f.filesha_id ORDER BY run.starttime DESC LIMIT 1"
 
     def __init__(self, dbh, readOnly = False):
         self.dbh = dbh
@@ -256,12 +268,12 @@ class FileTable (Table):
 
         return super(FileTable, self).getId(runId, filepathId, fileowner, filegroup, filemode, filesize, filetime, fileshaId)
 
-    def getExistingRecord(self, host, filepath, filesize):
+    def getExistingRecord(self, host, filepath, filesize, filetime):
         hostId = self.hostTable(host)
         filepathId = self.filepathTable(filepath)
 
         cursor = self.dbh.cursor()
-        cursor.execute(self.getExistingRecord_select, hostId, filepathId, filesize)
+        cursor.execute(self.getExistingRecord_select, hostId, filepathId, filesize, filetime)
         result = fetchone()
 
         if (result is None):
