@@ -5,7 +5,7 @@ import sqlite3
 class Table:
     dataSize = 1
     getId_select = "SELECT id FROM foo WHERE foo = ?"
-    getId_insert = "ISNERT INTO foo (foo) VALUES (?)"
+    getId_insert = "INSERT INTO foo (foo) VALUES (?)"
 
     createTable_list = [
         "CREATE TABLE IF NOT EXISTS foo (id INTEGER PRIMARY KEY AUTOINCREMENT, foo TEXT)",
@@ -17,9 +17,16 @@ class Table:
         "DROP TABLE IF EXISTS foo"
     ]
 
-    def __init__(self, dbh, readOnly = False):
+    def __init__(self, dbh, readOnly = False, create = False, reset = False):
         self.dbh = dbh
         self.readOnly = readOnly
+
+        if (reset):
+            create = True
+            self.dropTable()
+
+        if (create):
+            self.createTable()
 
     def getId (self, *data):
         if (len(data) != self.dataSize):
@@ -165,7 +172,7 @@ class DirectoryTable (Table):
     def __init__(self, dbh, readOnly = False):
         self.dbh = dbh
         self.readOnly = readOnly
-        self.filePathTable = FilePathTable(dbh, readOnly)
+        self.filepathTable = FilePathTable(dbh, readOnly)
     
     def getId(self, *data):
         if (len(data) != self.dataSize):
@@ -173,7 +180,7 @@ class DirectoryTable (Table):
 
         (runId, filepath, fileowner, filegroup, filemode, filetime) = data
 
-        filepathId = self.filePathTable.getId(filepath)
+        filepathId = self.filepathTable.getId(filepath)
 
         return super(DirectoryTable, self).getId(runId, filepathId, fileowner, filegroup, filemode, filetime)
 
@@ -200,7 +207,7 @@ class LinkTable (Table):
     def __init__(self, dbh, readOnly = False):
         self.dbh = dbh
         self.readOnly = readOnly
-        self.filePathTable = FilePathTable(dbh, readOnly)
+        self.filepathTable = FilePathTable(dbh, readOnly)
 
     def getId(self, *data):
         if (len(data) != self.dataSize):
@@ -208,8 +215,8 @@ class LinkTable (Table):
 
         (runId, filepath, destpath) = data
 
-        filepathId = self.filePathTable.getId(filepath)
-        destpathId = self.filePathTable.getId(destpath)
+        filepathId = self.filepathTable.getId(filepath)
+        destpathId = self.filepathTable.getId(destpath)
 
         return super(LinkTable, self).getId(runId, filepathId, destpathId)
 
@@ -219,5 +226,46 @@ class FileTable (Table):
     dataSize = 8
 
     getId_select = "SELECT id FROM file WHERE run_id = ? and filepath_id = ? and fileowner = ? and filegroup = ? and filemode = ? and filesize = ? and filetime = ? and filesha_id = ?"
-    getId_insert = ""
+    getId_insert = "INSERT INTO file (run_id, filepath_id, fileowner, filegroup, filemode, filesyze, filetime, filesha_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+
+    createTable_list = [
+        "CREATE TABLE IF NOT EXISTS file (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER REFERENCES run(id), filepath_id INTEGER REFERENCES filepath(id), fileowner INTEGER, filegroup INTEGER, filemode INTEGER, filesize INTEGER, filetime INTEGER, filesha_id INTEGER REFERENCES filesha(id)"
+    ]
     
+    dropTable_list = [
+        "DROP TABLE IF EXISTS file"
+    ]
+
+    getExistingRecord_select = "SELECT s.filesha FROM filesha s, file f, run r WHERE r.host_id = ? AND f.filepath_id = ? AND f.filesize = ? AND f.run_id = r.id AND s.id = f.filesha_id ORDER BY run.starttime DESC LIMIT 1"
+
+    def __init__(self, dbh, readOnly = False):
+        self.dbh = dbh
+        self.readOnly = readOnly
+        self.filepathTable = FilepathTable(dbh, readOnly)
+        self.fileshaTable = FileshaTable(dbh, readOnly)
+        self.hostTable = HostTable(dbh, readOnly)
+
+    def getId(self, *data):
+        if (len(data) != self.dataSize):
+            raise TypeError("getId is expecting %d arguments and got %d." %(self.dataSize, len(data)))
+
+        (runId, filepath, fileowner, filegroup, filemode, filesize, filetime, filesha) = data
+
+        filepathId = self.filepathTable.getId(filepath)
+        fileshaId = self.fileshaTable.getId(filesha)
+
+        return super(FileTable, self).getId(runId, filepathId, fileowner, filegroup, filemode, filesize, filetime, fileshaId)
+
+    def getExistingRecord(self, host, filepath, filesize):
+        hostId = self.hostTable(host)
+        filepathId = self.filepathTable(filepath)
+
+        cursor = self.dbh.cursor()
+        cursor.execute(self.getExistingRecord_select, hostId, filepathId, filesize)
+        result = fetchone()
+
+        if (result is None):
+            return None
+        else:
+            return (result[0])
+        
