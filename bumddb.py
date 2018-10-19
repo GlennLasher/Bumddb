@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import sqlite3
+import time
 
 class Table:
     dataSize = 1
@@ -135,6 +136,10 @@ class RunTable (Table):
     updateStatus_update = "UPDATE run SET status_id = ? WHERE id = ?"
 
     updateEndtime_update = "UPDATE run SET endtime = ? WHERE id = ?"
+
+    listBackups_nohost = "SELECT r.id, h.host, r.starttime, r.endtime, s.status FROM run r, host h, status s WHERE r.endtime >= ? AND r.starttime <= ? AND h.id = r.host_id AND s.id = r.status_id ORDER BY r.starttime"
+
+    listBackups_withhost = "SELECT r.id, h.host, r.starttime, r.endtime, s.status FROM run r, host h, status s WHERE h.host = ? AND r.endtime >= ? AND r.starttime <= ? AND h.id = r.host_id AND s.id = r.status_id ORDER BY r.starttime"
     
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
         self.dbh = dbh
@@ -172,6 +177,28 @@ class RunTable (Table):
         cursor = self.dbh.cursor()
         cursor.execute(self.updateEndtime_update, (endTime, runId))
 
+    def listBackups (self, host = None, notBefore = None, notAfter = None):
+        cursor = self.dbh.cursor()
+
+        if (notBefore is None):
+            notBefore = 0
+
+        if (notAfter is None):
+            notAfter = time.time()
+            
+        if (host is None):
+            cursor.execute(self.listBackups_nohost, (notBefore, notAfter))
+        else:
+            cursor.execute(self.listBackups_withhost, (host, notBefore, notAfter))
+
+            
+        for result in cursor:
+            yield {"runId"     : result[0],
+                   "host"      : result[1],
+                   "starttime" : result[2],
+                   "endtime"   : result[3],
+                   "status"    : result[4]}
+            
 class DirectoryTable (Table):
     dataSize = 6
 
