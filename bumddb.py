@@ -116,6 +116,26 @@ class FilepathTable (Table):
         "DROP INDEX IF EXISTS filepath_idx",
         "DROP TABLE IF EXISTS filepath"
     ]
+
+    search_dir  = "SELECT DISTINCT 'DIR', h.host, f.filetime, p.filepath FROM host h, directory f, filepath p, run r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id ORDER BY f.filetime"
+    search_link = "SELECT DISTINCT 'LINK', h.host, '---- -- -- -- -- --', p.filepath FROM host h, link f, filepath p, run r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id"
+    search_file = "SELECT DISTINCT 'FILE', h.host, f.filetime, p.filepath FROM host h, file f, filepath p, run r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id ORDER BY f.filetime"
+
+    def search(self, subjectlist):
+        cursor = self.dbh.cursor()
+
+        for term in subjectlist:
+            for search in [self.search_dir, self.search_link, self.search_file]:
+                cursor.execute(search, (("%" + term + "%"),))
+                for result in cursor:
+                    yield {'type'    : result[0],
+                           'host'     : result[1],
+                           'filetime' : result[2],
+                           'filepath' : result[3]}
+
+                
+
+            
     
 class RunTable (Table):
     dataSize = 2
