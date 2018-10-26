@@ -233,6 +233,10 @@ class DirectoryTable (Table):
         "DROP TABLE IF EXISTS directory"
     ]
 
+    restoreList_select_all = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime FROM directory f, filepath p WHERE d.run_id = ? AND d.filepath_id = f.id"
+
+    restoreList_select_subject = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime FROM directory f, filepath p WHERE d.run_id = ? AND f.filepath LIKE ?||'%' AND d.filepath_id = f.id"
+    
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
         self.dbh = dbh
         self.readOnly = readOnly
@@ -255,6 +259,28 @@ class DirectoryTable (Table):
 
         return super(DirectoryTable, self).getId(runId, filepathId, fileowner, filegroup, filemode, filetime)
 
+    def restoreList(self, runId, subjectlist):
+        cursor = self.dbh.cursor()
+        if (len(subjectlist) == 0):
+            cursor.execute(self.restoreList_select_all, (runId,))
+            for result in cursor:
+                yield {'filepath'  : result[0],
+                       'fileowner' : result[1],
+                       'filegroup' : result[2],
+                       'filemode'  : result[3],
+                       'filetime'  : result[4]}
+        else:
+            for subject in subjects:
+                cursor.execute(self.restoreList_select_subject, (runId, subject))
+                for result in cursor:
+                    yield {'filepath'  : result[0],
+                           'fileowner' : result[1],
+                           'filegroup' : result[2],
+                           'filemode'  : result[3],
+                           'filetime'  : result[4]}
+                    
+        
+    
 class LinkTable (Table):
 
     #ID, Run Id, Filepath ID, Destpath ID
@@ -262,7 +288,7 @@ class LinkTable (Table):
     dataSize = 3
 
     getId_select = "SELECT id FROM link WHERE run_id = ? AND filepath_id = ? AND destpath_id = ?"
-    getId_insert = "INSERT INTO link (run_id, filepath_id, destpath_id_ values (?, ?, ?)"
+    getId_insert = "INSERT INTO link (run_id, filepath_id, destpath_id) VALUES (?, ?, ?)"
 
     createTable_list = [
         "CREATE TABLE IF NOT EXISTS link (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER REFERENCES run(id), filepath_id INTEGER REFERENCES filepath(id), destpath_id INTEGER REFERENCES filepath(id))",
@@ -274,6 +300,10 @@ class LinkTable (Table):
         "DROP INDEX IF EXISTS link_idx",
         "DROP TABLE IF EXISTS link"
     ]
+
+    restoreList_select_all = "SELECT s.filepath, d.filepath FROM link l JOIN filepath s ON l.filepath_id = s.id JOIN filepath d ON l.destpath_id = d.id WHERE l.run_id = ?"
+    
+    restoreList_select_subject = "SELECT s.filepath, d.filepath FROM link l JOIN filepath s ON l.filepath_id = s.id JOIN filepath d ON l.destpath_id = d.id WHERE l.run_id = ? AND s.filepath LIKE ?||'%'"
     
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
         self.dbh = dbh
@@ -300,6 +330,20 @@ class LinkTable (Table):
 
         return super(LinkTable, self).getId(runId, filepathId, destpathId)
 
+    def restoreList(self, runId, subjectlist):
+        cursor = self.dbh.cursor()
+        if (len(subjectlist) == 0):
+            cursor.execute(self.restoreList_select_all, (runId,))
+            for result in cursor:
+                yield {'filepath'  : result[0],
+                       'destpath'  : result[1]}
+        else:
+            for subject in subjects:
+                cursor.execute(self.restoreList_select_subject, (runId, subject))
+                for result in cursor:
+                    yield {'filepath'  : result[0],
+                           'destpath'  : result[1]}
+    
 class FileTable (Table):
     #ID, run_id, filepath_id, fileowner, filegroup, filemode, filesize, filetime, filesha_id
 
@@ -318,6 +362,11 @@ class FileTable (Table):
 
     getExistingRecord_select = "SELECT s.filesha FROM filesha s, file f, run r WHERE r.host_id = ? AND f.filepath_id = ? AND f.filesize = ? AND f.filetime = ? AND f.run_id = r.id AND s.id = f.filesha_id ORDER BY r.starttime DESC LIMIT 1"
 
+    restoreList_select_all = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode f.filetime, s.filesha FROM file f JOIN filepath p ON p.id = f.filepath_id JOIN filesha s ON s.id = f.filesha_id WHERE f.run_id = ?"
+
+    restoreList_select_subject = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode f.filetime, s.filesha FROM file f JOIN filepath p ON p.id = f.filepath_id JOIN filesha s ON s.id = f.filesha_id WHERE f.run_id = ? AND f.filepath LIKE ?||'%'"
+    
+    
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
         self.dbh = dbh
         self.readOnly = readOnly
@@ -356,3 +405,24 @@ class FileTable (Table):
         else:
             return (result[0])
         
+    def restoreList(self, runId, subjectlist):
+        cursor = self.dbh.cursor()
+        if (len(subjectlist) == 0):
+            cursor.execute(self.restoreList_select_all, (runId,))
+            for result in cursor:
+                yield {'filepath'  : result[0],
+                       'fileowner' : result[1],
+                       'filegroup' : result[2],
+                       'filemode'  : result[3],
+                       'filetime'  : result[4],
+                       'filesha'   : result[5]}
+        else:
+            for subject in subjects:
+                cursor.execute(self.restoreList_select_subject, (runId, subject))
+                for result in cursor:
+                yield {'filepath'  : result[0],
+                       'fileowner' : result[1],
+                       'filegroup' : result[2],
+                       'filemode'  : result[3],
+                       'filetime'  : result[4],
+                       'filesha'   : result[5]}
