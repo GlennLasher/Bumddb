@@ -420,9 +420,9 @@ class FileTable (Table):
             for subject in subjects:
                 cursor.execute(self.restoreList_select_subject, (runId, subject))
                 for result in cursor:
-                yield {'filepath'  : result[0],
-                       'fileowner' : result[1],
-                       'filegroup' : result[2],
-                       'filemode'  : result[3],
-                       'filetime'  : result[4],
-                       'filesha'   : result[5]}
+                    yield {'filepath'  : result[0],
+                           'fileowner' : result[1],
+                           'filegroup' : result[2],
+                           'filemode'  : result[3],
+                           'filetime'  : result[4],
+                           'filesha'   : result[5]}
