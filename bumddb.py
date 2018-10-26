@@ -4,6 +4,16 @@ import sqlite3
 import time
 
 class Table:
+    """Implements a generic table and some methods to operate on one.
+    These will be inherited by other classes.
+
+    The basic concept is that you create a subclass of this class,
+    then define the actual SQL statements in place of the ones defined
+    below.  The dataSize variable defines the number of variables that
+    should be expected by the getId method
+
+    """
+
     dataSize = 1
     getId_select = "SELECT id FROM foo WHERE foo = ?"
     getId_insert = "INSERT INTO foo (foo) VALUES (?)"
@@ -19,6 +29,11 @@ class Table:
     ]
 
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
+        """Sets up a Table object.  Put a reference to the database handle and
+        the read-only flag on the object as parameters.  If warranted,
+        drop and/or create the table by calling the relevant methods.
+
+        """
         self.dbh = dbh
         self.readOnly = readOnly
 
@@ -30,6 +45,14 @@ class Table:
             self.createTable()
 
     def getId (self, *data):
+        """Gets an ID for a value, come hell or high water.  If there is a
+        record that matches the data, the ID of that record is
+        returned.  If not, and readOnly is False, then it will insert
+        a new record with the given data and then return the ID of the
+        new record.  If readOnly is True and the record is not found,
+        returns None.
+        """
+        
         if (len(data) != self.dataSize):
             raise TypeError("getId is expecting %d arguments and got %d." %(self.dataSize, len(data)))
 
@@ -50,14 +73,29 @@ class Table:
         return rowId
 
     def createTable (self):
+        """Creates the table and anything that needs to go with it by stepping
+        through the commands stored in the createTable_list variable
+        above or in a class that inherits this method.
+
+        """
         for command in self.createTable_list:
             self.dbh.execute(command)
 
     def dropTable (self):
+        """Drops the table and anything that goes with it by stepping through
+        the commands stored in the dropTable_list variable above or in
+        a class that inherits this method.
+
+        """
         for command in self.dropTable_list:
             self.dbh.execute(command)
 
 class StatusTable (Table):
+    """Implements a table to hold the status of a backup.  This is based
+    entirely on methods inherited from Table.
+
+    """
+
     dataSize = 1
     getId_select = "SELECT id FROM status WHERE status = ?"
     getId_insert = "INSERT INTO status (status) VALUES (?)"
@@ -73,6 +111,10 @@ class StatusTable (Table):
     ]
 
 class HostTable (Table):
+    """Implements a table to hold the hostnames of the systems backed up.
+    This is based entirely on methods inherited from Table.
+
+    """
     dataSize = 1
     getId_select = "SELECT id FROM host WHERE host = ?"
     getId_insert = "INSERT INTO host (host) VALUES (?)"
@@ -88,6 +130,10 @@ class HostTable (Table):
     ]
 
 class FileshaTable (Table):
+    """Implements a table to hold the SHA256 hashes of the files backed
+    up.  This is based entirely on methods inherited from Table.
+
+    """
     dataSize = 1
     getId_select = "SELECT id FROM filesha WHERE filesha = ?"
     getId_insert = "INSERT INTO filesha (filesha) VALUES (?)"
@@ -103,6 +149,11 @@ class FileshaTable (Table):
     ]
     
 class FilepathTable (Table):
+    """Implements a table to hold file metadata.  In addition to the
+    primitives found in Table, this implements some methods to perform
+    searches and reports.
+
+    """
     dataSize = 1
     getId_select = "SELECT id FROM filepath WHERE filepath = ?"
     getId_insert = "INSERT INTO filepath (filepath) VALUES (?)"
@@ -122,13 +173,16 @@ class FilepathTable (Table):
     search_file = "SELECT DISTINCT 'FILE', h.host, f.filetime, p.filepath FROM host h, file f, filepath p, run r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id ORDER BY f.filetime"
 
     def search(self, subjectlist):
+        """Perform a substring search on the paths.
+
+        """
         cursor = self.dbh.cursor()
 
         for term in subjectlist:
             for search in [self.search_dir, self.search_link, self.search_file]:
                 cursor.execute(search, (("%" + term + "%"),))
                 for result in cursor:
-                    yield {'type'    : result[0],
+                    yield {'type'     : result[0],
                            'host'     : result[1],
                            'filetime' : result[2],
                            'filepath' : result[3]}
@@ -138,6 +192,16 @@ class FilepathTable (Table):
             
     
 class RunTable (Table):
+    """Implements a table to contain the characteristics and state of a
+    backup that is being run.
+
+    Note that even though this table contains more than two
+    parameters, dataSize is set to 2 because only the node name and
+    start time are known at the time that the record is inserted.
+    Methods to alter the other two fields (end time and status) are
+    provided.
+
+    """
     dataSize = 2
 
     getId_select = "SELECT id FROM run WHERE host_id = ? AND starttime = ?"
@@ -162,6 +226,12 @@ class RunTable (Table):
     listBackups_withhost = "SELECT r.id, h.host, r.starttime, r.endtime, s.status FROM run r, host h, status s WHERE h.host = ? AND r.endtime >= ? AND r.starttime <= ? AND h.id = r.host_id AND s.id = r.status_id ORDER BY r.starttime"
     
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
+        """Initializes the RunTable object.  This differs from the generic
+        Table type because it also needs an instance of StatusTable
+        and HostTable for reference.
+
+        """
+
         self.dbh = dbh
         self.readOnly = readOnly
         self.statusTable = StatusTable(dbh, readOnly)
@@ -175,6 +245,12 @@ class RunTable (Table):
             self.createTable()
 
     def getId (self, *data):
+        """Implements a special case of getId that performs a lookup to get
+        the hostId for the insertion.  It also ends by setting the
+        status ID to point to a status of Setup.
+
+        """
+        
         if (len(data) != self.dataSize):
             raise TypeError("getId is expecting %d arguments and got %d." %(self.dataSize, len(data)))
 
@@ -188,16 +264,27 @@ class RunTable (Table):
         return runId
         
     def updateStatus (self, runId, status):
+        """Implements the means to change the value of the status for a given
+        run.
+
+        """
         statusId = self.statusTable.getId(status)
 
         cursor = self.dbh.cursor()
         cursor.execute(self.updateStatus_update, (statusId, runId))
 
     def updateEndtime (self, runId, endTime):
+        """Implements the means to set the end time when a run finishes, dies
+        or is terminated.
+
+        """
         cursor = self.dbh.cursor()
         cursor.execute(self.updateEndtime_update, (endTime, runId))
 
     def listBackups (self, host = None, notBefore = None, notAfter = None):
+        """Reports out a list of backup runs that match the given criteria.
+
+        """
         cursor = self.dbh.cursor()
 
         if (notBefore is None):
@@ -220,6 +307,12 @@ class RunTable (Table):
                    "status"    : result[4]}
             
 class DirectoryTable (Table):
+    """Implements a table to contain information about what directories
+    exist in a backup.  Since directories are fungible, we just need
+    to capture the path, permissions and timestamp to be able to
+    create a new one that is functionally equivalent.
+
+    """
     dataSize = 6
 
     getId_select = "SELECT id FROM directory WHERE run_id = ? AND filepath_id = ? AND fileowner = ? AND filegroup = ? AND filemode = ? AND filetime = ?"
@@ -238,6 +331,11 @@ class DirectoryTable (Table):
     restoreList_select_subject = "SELECT p.filepath, d.fileowner, d.filegroup, d.filemode, d.filetime FROM directory d JOIN filepath p ON d.filepath_id = p.id WHERE d.run_id = ? AND p.filepath LIKE ?||'%'"
     
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
+        """Sets up the DirectoryTable object.  In addition to the basics, this
+        instantiates a FilePathTable and puts it on the DirectoryTable
+        object for reference use.
+
+        """
         self.dbh = dbh
         self.readOnly = readOnly
         self.filepathTable = FilepathTable(dbh, readOnly)
@@ -250,6 +348,10 @@ class DirectoryTable (Table):
             self.createTable()
 
     def getId(self, *data):
+        """Implements getId using the inherited version, but only after using
+        the attached FilepathTable object to get a filepath ID.
+
+        """
         if (len(data) != self.dataSize):
             raise TypeError("getId is expecting %d arguments and got %d." %(self.dataSize, len(data)))
 
@@ -260,6 +362,12 @@ class DirectoryTable (Table):
         return super(DirectoryTable, self).getId(runId, filepathId, fileowner, filegroup, filemode, filetime)
 
     def restoreList(self, runId, subjectlist):
+        """Reports out directories that need to be created during restore
+        operations, along with their permissions and timestamps.  If
+        subjectlist is empty, all directories under that runId are
+        yielded.
+
+        """
         cursor = self.dbh.cursor()
         if (len(subjectlist) == 0):
             cursor.execute(self.restoreList_select_all, (runId,))
@@ -282,7 +390,18 @@ class DirectoryTable (Table):
         
     
 class LinkTable (Table):
+    """Implements a table to contain information about symbolic links.
+    Symlinks only have two data points: their location and the
+    location they point to.  As such, this table will simply link two
+    records out of the filepath table.
 
+    It is worth noting that the destination path will not be massaged
+    into an absolute path as will happen in other places in this
+    system.  The reason for this is that a symlink may be relative,
+    and if it is, it needs to be left that way so that a restoration
+    in a different location may still stand a fighting chance.
+
+    """
     #ID, Run Id, Filepath ID, Destpath ID
 
     dataSize = 3
@@ -306,6 +425,11 @@ class LinkTable (Table):
     restoreList_select_subject = "SELECT s.filepath, d.filepath FROM link l JOIN filepath s ON l.filepath_id = s.id JOIN filepath d ON l.destpath_id = d.id WHERE l.run_id = ? AND s.filepath LIKE ?||'%'"
     
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
+        """Sets up the LinkTable object.  As with other filesystem objects,
+        this is being overridden so that we can put a FilepathTable
+        object on this object for reference purposes.
+
+        """
         self.dbh = dbh
         self.readOnly = readOnly
         self.filepathTable = FilepathTable(dbh, readOnly)
@@ -320,6 +444,11 @@ class LinkTable (Table):
 
 
     def getId(self, *data):
+        """Overrides the getId from the Table class by starting with a pair of
+        calls to FilepathTable.getId so that we have the IDs to
+        insert.
+
+        """
         if (len(data) != self.dataSize):
             raise TypeError("getId is expecting %d arguments and got %d." %(self.dataSize, len(data)))
 
@@ -331,6 +460,11 @@ class LinkTable (Table):
         return super(LinkTable, self).getId(runId, filepathId, destpathId)
 
     def restoreList(self, runId, subjectlist):
+        """Reports out symbolic links that need to be created during restore
+        operation.  If subjectlist is empty, all directories under
+        that runId are yielded.
+
+        """
         cursor = self.dbh.cursor()
         if (len(subjectlist) == 0):
             cursor.execute(self.restoreList_select_all, (runId,))
@@ -345,6 +479,11 @@ class LinkTable (Table):
                            'destpath'  : result[1]}
     
 class FileTable (Table):
+    """Implements a table to contain information about what files exist in
+    a backup.  We capture the path, permissions, timestamp and SHA256
+    hash for identification of the content.
+
+    """
     #ID, run_id, filepath_id, fileowner, filegroup, filemode, filesize, filetime, filesha_id
 
     dataSize = 8
@@ -368,6 +507,12 @@ class FileTable (Table):
     
     
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
+        """Sets up the FileTable object.  In addition to the basics, this
+        instantiates a FilepathTable, FileshaTable and HostTable
+        object and puts them on the FileTable object for reference
+        use.
+
+        """
         self.dbh = dbh
         self.readOnly = readOnly
         self.filepathTable = FilepathTable(dbh, readOnly)
@@ -382,6 +527,11 @@ class FileTable (Table):
             self.createTable()
 
     def getId(self, *data):
+        """Implements getId using the inherited version, but only after using
+        the attached FilepathTable and FileshaTable to get the
+        relevant IDs to insert/search for.
+
+        """
         if (len(data) != self.dataSize):
             raise TypeError("getId is expecting %d arguments and got %d." %(self.dataSize, len(data)))
 
@@ -393,6 +543,12 @@ class FileTable (Table):
         return super(FileTable, self).getId(runId, filepathId, fileowner, filegroup, filemode, filesize, filetime, fileshaId)
 
     def getExistingRecord(self, host, filepath, filesize, filetime):
+        """Looks to see if there is a record that matches on host, path, size
+        and timestamp, and returns it.  This is for fast-mode backups,
+        in which the hashing step is skipped on the assumption that
+        the environment is not hostile.
+
+        """
         hostId = self.hostTable.getId(host)
         filepathId = self.filepathTable.getId(filepath)
 
@@ -406,6 +562,12 @@ class FileTable (Table):
             return (result[0])
         
     def restoreList(self, runId, subjectlist):
+        """Reports out files that need to be created during restore
+        operations, along with their permissions, timestamps and
+        hashes.  If subjectlist is empty, all files under that runId
+        are yielded.
+
+        """
         cursor = self.dbh.cursor()
         if (len(subjectlist) == 0):
             cursor.execute(self.restoreList_select_all, (runId,))
