@@ -97,17 +97,17 @@ class StatusTable (Table):
     """
 
     dataSize = 1
-    getId_select = "SELECT id FROM status WHERE status = ?"
-    getId_insert = "INSERT INTO status (status) VALUES (?)"
+    getId_select = "SELECT id FROM status_v1 WHERE status = ?"
+    getId_insert = "INSERT INTO status_v1 (status) VALUES (?)"
 
     createTable_list = [
-        "CREATE TABLE IF NOT EXISTS status (id INTEGER PRIMARY KEY AUTOINCREMENT, status TEXT)",
-        "CREATE INDEX IF NOT EXISTS status_idx ON status(status)"
+        "CREATE TABLE IF NOT EXISTS status_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, status TEXT)",
+        "CREATE INDEX IF NOT EXISTS status_v1_idx ON status_v1(status)"
     ]
 
     dropTable_list = [
-        "DROP INDEX IF EXISTS status_idx",
-        "DROP TABLE IF EXISTS status"
+        "DROP INDEX IF EXISTS status_v1_idx",
+        "DROP TABLE IF EXISTS status_v1"
     ]
 
 class HostTable (Table):
@@ -116,17 +116,17 @@ class HostTable (Table):
 
     """
     dataSize = 1
-    getId_select = "SELECT id FROM host WHERE host = ?"
-    getId_insert = "INSERT INTO host (host) VALUES (?)"
+    getId_select = "SELECT id FROM host_v1 WHERE host = ?"
+    getId_insert = "INSERT INTO host_v1 (host) VALUES (?)"
 
     createTable_list = [
-        "CREATE TABLE IF NOT EXISTS host (id INTEGER PRIMARY KEY AUTOINCREMENT, host TEXT)",
-        "CREATE INDEX IF NOT EXISTS host_idx ON host(host)"
+        "CREATE TABLE IF NOT EXISTS host_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, host TEXT)",
+        "CREATE INDEX IF NOT EXISTS host_v1_idx ON host_v1(host)"
     ]
     
     dropTable_list = [
-        "DROP INDEX IF EXISTS host_idx",
-        "DROP TABLE IF EXISTS host"
+        "DROP INDEX IF EXISTS host_v1_idx",
+        "DROP TABLE IF EXISTS host_v1"
     ]
 
 class FileshaTable (Table):
@@ -135,17 +135,17 @@ class FileshaTable (Table):
 
     """
     dataSize = 1
-    getId_select = "SELECT id FROM filesha WHERE filesha = ?"
-    getId_insert = "INSERT INTO filesha (filesha) VALUES (?)"
+    getId_select = "SELECT id FROM filesha_v1 WHERE filesha = ?"
+    getId_insert = "INSERT INTO filesha_v1 (filesha) VALUES (?)"
 
     createTable_list = [
-        "CREATE TABLE IF NOT EXISTS filesha (id INTEGER PRIMARY KEY AUTOINCREMENT, filesha TEXT)",
-        "CREATE INDEX IF NOT EXISTS filesha_idx ON filesha(filesha)"
+        "CREATE TABLE IF NOT EXISTS filesha_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, filesha TEXT)",
+        "CREATE INDEX IF NOT EXISTS filesha_v1_idx ON filesha_v1(filesha)"
     ]
 
     dropTable_list = [
-        "DROP INDEX IF EXISTS filesha_idx",
-        "DROP TABLE IF EXISTS filesha"
+        "DROP INDEX IF EXISTS filesha_v1_idx",
+        "DROP TABLE IF EXISTS filesha_v1"
     ]
     
 class FilepathTable (Table):
@@ -155,22 +155,22 @@ class FilepathTable (Table):
 
     """
     dataSize = 1
-    getId_select = "SELECT id FROM filepath WHERE filepath = ?"
-    getId_insert = "INSERT INTO filepath (filepath) VALUES (?)"
+    getId_select = "SELECT id FROM filepath_v1 WHERE filepath = ?"
+    getId_insert = "INSERT INTO filepath_v1 (filepath) VALUES (?)"
 
     createTable_list = [
-        "CREATE TABLE IF NOT EXISTS filepath (id INTEGER PRIMARY KEY AUTOINCREMENT, filepath TEXT)",
-        "CREATE INDEX IF NOT EXISTS filepath_idx ON filepath(filepath)"
+        "CREATE TABLE IF NOT EXISTS filepath_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, filepath TEXT)",
+        "CREATE INDEX IF NOT EXISTS filepath_v1_idx ON filepath_v1(filepath)"
     ]
 
     dropTable_list = [
-        "DROP INDEX IF EXISTS filepath_idx",
-        "DROP TABLE IF EXISTS filepath"
+        "DROP INDEX IF EXISTS filepath_v1_idx",
+        "DROP TABLE IF EXISTS filepath_v1"
     ]
 
-    search_dir  = "SELECT DISTINCT 'DIR', h.host, f.filetime, p.filepath FROM host h, directory f, filepath p, run r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id ORDER BY f.filetime"
-    search_link = "SELECT DISTINCT 'LINK', h.host, '---- -- -- -- -- --', p.filepath FROM host h, link f, filepath p, run r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id"
-    search_file = "SELECT DISTINCT 'FILE', h.host, f.filetime, p.filepath FROM host h, file f, filepath p, run r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id ORDER BY f.filetime"
+    search_dir  = "SELECT DISTINCT 'DIR', h.host, f.filetime, p.filepath FROM host_v1 h, directory_v1 f, filepath_v1 p, run_v1 r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id ORDER BY f.filetime"
+    search_link = "SELECT DISTINCT 'LINK', h.host, '---- -- -- -- -- --', p.filepath FROM host_v1 h, link_v1 f, filepath_v1 p, run_v1 r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id"
+    search_file = "SELECT DISTINCT 'FILE', h.host, f.filetime, p.filepath FROM host_v1 h, file_v1 f, filepath_v1 p, run_v1 r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id ORDER BY f.filetime"
 
     def search(self, subjectlist):
         """Perform a substring search on the paths.
@@ -204,26 +204,26 @@ class RunTable (Table):
     """
     dataSize = 2
 
-    getId_select = "SELECT id FROM run WHERE host_id = ? AND starttime = ?"
-    getId_insert = "INSERT INTO run (host_id, starttime) values (?, ?)"
+    getId_select = "SELECT id FROM run_v1 WHERE host_id = ? AND starttime = ?"
+    getId_insert = "INSERT INTO run_v1 (host_id, starttime) values (?, ?)"
 
     createTable_list = [
-        "CREATE TABLE IF NOT EXISTS run (id INTEGER PRIMARY KEY AUTOINCREMENT, host_id INTEGER REFERENCES host(host_id), starttime INTEGER, endtime INTEGER, status_id INTEGER REFERENCES status(id))",
-        "CREATE INDEX IF NOT EXISTS run_idx ON run (host_id, starttime, endtime)",
+        "CREATE TABLE IF NOT EXISTS run_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, host_id INTEGER REFERENCES host(host_id), starttime INTEGER, endtime INTEGER, status_id INTEGER REFERENCES status(id))",
+        "CREATE INDEX IF NOT EXISTS run_v1_idx ON run (host_id, starttime, endtime)",
     ]
 
     dropTable_list = [
-        "DROP INDEX IF EXISTS run_idx",
-        "DROP TABLE IF EXISTS run"
+        "DROP INDEX IF EXISTS run_v1_idx",
+        "DROP TABLE IF EXISTS run_v1"
     ]
 
-    updateStatus_update = "UPDATE run SET status_id = ? WHERE id = ?"
+    updateStatus_update = "UPDATE run_v1 SET status_id = ? WHERE id = ?"
 
-    updateEndtime_update = "UPDATE run SET endtime = ? WHERE id = ?"
+    updateEndtime_update = "UPDATE run_v1 SET endtime = ? WHERE id = ?"
 
-    listBackups_nohost = "SELECT r.id, h.host, r.starttime, r.endtime, s.status FROM run r, host h, status s WHERE r.endtime >= ? AND r.starttime <= ? AND h.id = r.host_id AND s.id = r.status_id ORDER BY r.starttime"
+    listBackups_nohost = "SELECT r.id, h.host, r.starttime, r.endtime, s.status FROM run_v1 r, host_v1 h, status_v1 s WHERE r.endtime >= ? AND r.starttime <= ? AND h.id = r.host_id AND s.id = r.status_id ORDER BY r.starttime"
 
-    listBackups_withhost = "SELECT r.id, h.host, r.starttime, r.endtime, s.status FROM run r, host h, status s WHERE h.host = ? AND r.endtime >= ? AND r.starttime <= ? AND h.id = r.host_id AND s.id = r.status_id ORDER BY r.starttime"
+    listBackups_withhost = "SELECT r.id, h.host, r.starttime, r.endtime, s.status FROM run_v1 r, host_v1 h, status_v1 s WHERE h.host = ? AND r.endtime >= ? AND r.starttime <= ? AND h.id = r.host_id AND s.id = r.status_id ORDER BY r.starttime"
     
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
         """Initializes the RunTable object.  This differs from the generic
@@ -315,20 +315,20 @@ class DirectoryTable (Table):
     """
     dataSize = 6
 
-    getId_select = "SELECT id FROM directory WHERE run_id = ? AND filepath_id = ? AND fileowner = ? AND filegroup = ? AND filemode = ? AND filetime = ?"
-    getId_insert = "INSERT INTO directory (run_id, filepath_id, fileowner, filegroup, filemode, filetime) VALUES (?, ?, ?, ?, ?, ?)"
+    getId_select = "SELECT id FROM directory_v1 WHERE run_id = ? AND filepath_id = ? AND fileowner = ? AND filegroup = ? AND filemode = ? AND filetime = ?"
+    getId_insert = "INSERT INTO directory_v1 (run_id, filepath_id, fileowner, filegroup, filemode, filetime) VALUES (?, ?, ?, ?, ?, ?)"
 
     createTable_list = [
-        "CREATE TABLE IF NOT EXISTS directory (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER REFERENCES run(id), filepath_id INTEGER REFERENCES filepath(id), fileowner INTEGER, filegroup INTEGER, filemode INTEGER, filetime INTEGER)"
+        "CREATE TABLE IF NOT EXISTS directory_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER REFERENCES run(id), filepath_id INTEGER REFERENCES filepath(id), fileowner INTEGER, filegroup INTEGER, filemode INTEGER, filetime INTEGER)"
     ]
 
     dropTable_list = [
-        "DROP TABLE IF EXISTS directory"
+        "DROP TABLE IF EXISTS directory_v1"
     ]
 
-    restoreList_select_all = "SELECT p.filepath, d.fileowner, d.filegroup, d.filemode, d.filetime FROM directory d JOIN filepath p ON d.filepath_id = p.id WHERE d.run_id = ?"
+    restoreList_select_all = "SELECT p.filepath, d.fileowner, d.filegroup, d.filemode, d.filetime FROM directory_v1 d JOIN filepath_v1 p ON d.filepath_id = p.id WHERE d.run_id = ?"
     
-    restoreList_select_subject = "SELECT p.filepath, d.fileowner, d.filegroup, d.filemode, d.filetime FROM directory d JOIN filepath p ON d.filepath_id = p.id WHERE d.run_id = ? AND p.filepath LIKE ?||'%'"
+    restoreList_select_subject = "SELECT p.filepath, d.fileowner, d.filegroup, d.filemode, d.filetime FROM directory_v1 d JOIN filepath_v1 p ON d.filepath_id = p.id WHERE d.run_id = ? AND p.filepath LIKE ?||'%'"
     
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
         """Sets up the DirectoryTable object.  In addition to the basics, this
@@ -406,23 +406,23 @@ class LinkTable (Table):
 
     dataSize = 3
 
-    getId_select = "SELECT id FROM link WHERE run_id = ? AND filepath_id = ? AND destpath_id = ?"
-    getId_insert = "INSERT INTO link (run_id, filepath_id, destpath_id) VALUES (?, ?, ?)"
+    getId_select = "SELECT id FROM link_v1 WHERE run_id = ? AND filepath_id = ? AND destpath_id = ?"
+    getId_insert = "INSERT INTO link_v1 (run_id, filepath_id, destpath_id) VALUES (?, ?, ?)"
 
     createTable_list = [
-        "CREATE TABLE IF NOT EXISTS link (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER REFERENCES run(id), filepath_id INTEGER REFERENCES filepath(id), destpath_id INTEGER REFERENCES filepath(id))",
-        "CREATE INDEX IF NOT EXISTS link_idx ON link(run_id)"
+        "CREATE TABLE IF NOT EXISTS link_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER REFERENCES run(id), filepath_id INTEGER REFERENCES filepath(id), destpath_id INTEGER REFERENCES filepath(id))",
+        "CREATE INDEX IF NOT EXISTS link_v1_idx ON link_v1(run_id)"
     ]
 
 
     dropTable_list = [
-        "DROP INDEX IF EXISTS link_idx",
-        "DROP TABLE IF EXISTS link"
+        "DROP INDEX IF EXISTS link_v1_idx",
+        "DROP TABLE IF EXISTS link_v1"
     ]
 
-    restoreList_select_all = "SELECT s.filepath, d.filepath FROM link l JOIN filepath s ON l.filepath_id = s.id JOIN filepath d ON l.destpath_id = d.id WHERE l.run_id = ?"
+    restoreList_select_all = "SELECT s.filepath, d.filepath FROM link_v1 l JOIN filepath_v1 s ON l.filepath_id = s.id JOIN filepath_v1 d ON l.destpath_id = d.id WHERE l.run_id = ?"
     
-    restoreList_select_subject = "SELECT s.filepath, d.filepath FROM link l JOIN filepath s ON l.filepath_id = s.id JOIN filepath d ON l.destpath_id = d.id WHERE l.run_id = ? AND s.filepath LIKE ?||'%'"
+    restoreList_select_subject = "SELECT s.filepath, d.filepath FROM link_v1 l JOIN filepath_v1 s ON l.filepath_id = s.id JOIN filepath_v1 d ON l.destpath_id = d.id WHERE l.run_id = ? AND s.filepath LIKE ?||'%'"
     
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
         """Sets up the LinkTable object.  As with other filesystem objects,
@@ -488,22 +488,22 @@ class FileTable (Table):
 
     dataSize = 8
 
-    getId_select = "SELECT id FROM file WHERE run_id = ? and filepath_id = ? and fileowner = ? and filegroup = ? and filemode = ? and filesize = ? and filetime = ? and filesha_id = ?"
-    getId_insert = "INSERT INTO file (run_id, filepath_id, fileowner, filegroup, filemode, filesize, filetime, filesha_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    getId_select = "SELECT id FROM file_v1 WHERE run_id = ? and filepath_id = ? and fileowner = ? and filegroup = ? and filemode = ? and filesize = ? and filetime = ? and filesha_id = ?"
+    getId_insert = "INSERT INTO file_v1 (run_id, filepath_id, fileowner, filegroup, filemode, filesize, filetime, filesha_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 
     createTable_list = [
-        "CREATE TABLE IF NOT EXISTS file (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER REFERENCES run(id), filepath_id INTEGER REFERENCES filepath(id), fileowner INTEGER, filegroup INTEGER, filemode INTEGER, filesize INTEGER, filetime INTEGER, filesha_id INTEGER REFERENCES filesha(id))"
+        "CREATE TABLE IF NOT EXISTS file_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER REFERENCES run(id), filepath_id INTEGER REFERENCES filepath(id), fileowner INTEGER, filegroup INTEGER, filemode INTEGER, filesize INTEGER, filetime INTEGER, filesha_id INTEGER REFERENCES filesha(id))"
     ]
     
     dropTable_list = [
-        "DROP TABLE IF EXISTS file"
+        "DROP TABLE IF EXISTS file_v1"
     ]
 
-    getExistingRecord_select = "SELECT s.filesha FROM filesha s, file f, run r WHERE r.host_id = ? AND f.filepath_id = ? AND f.filesize = ? AND f.filetime = ? AND f.run_id = r.id AND s.id = f.filesha_id ORDER BY r.starttime DESC LIMIT 1"
+    getExistingRecord_select = "SELECT s.filesha FROM filesha_v1 s, file_v1 f, run_v1 r WHERE r.host_id = ? AND f.filepath_id = ? AND f.filesize = ? AND f.filetime = ? AND f.run_id = r.id AND s.id = f.filesha_id ORDER BY r.starttime DESC LIMIT 1"
 
-    restoreList_select_all = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime, s.filesha FROM file f JOIN filepath p ON p.id = f.filepath_id JOIN filesha s ON s.id = f.filesha_id WHERE f.run_id = ?"
+    restoreList_select_all = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime, s.filesha FROM file_v1 f JOIN filepath_v1 p ON p.id = f.filepath_id JOIN filesha s ON s.id = f.filesha_id WHERE f.run_id = ?"
 
-    restoreList_select_subject = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime, s.filesha FROM file f JOIN filepath p ON p.id = f.filepath_id JOIN filesha s ON s.id = f.filesha_id WHERE f.run_id = ? AND f.filepath LIKE ?||'%'"
+    restoreList_select_subject = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime, s.filesha FROM file_v1 f JOIN filepath_v1 p ON p.id = f.filepath_id JOIN filesha_v1 s ON s.id = f.filesha_id WHERE f.run_id = ? AND f.filepath LIKE ?||'%'"
     
     
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
