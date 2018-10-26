@@ -209,7 +209,7 @@ class RunTable (Table):
 
     createTable_list = [
         "CREATE TABLE IF NOT EXISTS run_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, host_id INTEGER REFERENCES host(host_id), starttime INTEGER, endtime INTEGER, status_id INTEGER REFERENCES status(id))",
-        "CREATE INDEX IF NOT EXISTS run_v1_idx ON run (host_id, starttime, endtime)",
+        "CREATE INDEX IF NOT EXISTS run_v1_idx ON run_v1 (host_id, starttime, endtime)",
     ]
 
     dropTable_list = [
