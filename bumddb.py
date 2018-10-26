@@ -169,7 +169,7 @@ class FilepathTable (Table):
     ]
 
     search_dir  = "SELECT DISTINCT 'DIR', h.host, f.filetime, p.filepath FROM host_v1 h, directory_v1 f, filepath_v1 p, run_v1 r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id ORDER BY f.filetime"
-    search_link = "SELECT DISTINCT 'LINK', h.host, '---- -- -- -- -- --', p.filepath FROM host_v1 h, link_v1 f, filepath_v1 p, run_v1 r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id"
+    search_link = "SELECT DISTINCT 'LINK', h.host, 0, p.filepath FROM host_v1 h, link_v1 f, filepath_v1 p, run_v1 r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id"
     search_file = "SELECT DISTINCT 'FILE', h.host, f.filetime, p.filepath FROM host_v1 h, file_v1 f, filepath_v1 p, run_v1 r WHERE p.filepath LIKE ? AND h.id = r.host_id AND r.id = f.run_id AND p.id = f.filepath_id ORDER BY f.filetime"
 
     def search(self, subjectlist):
@@ -501,7 +501,7 @@ class FileTable (Table):
 
     getExistingRecord_select = "SELECT s.filesha FROM filesha_v1 s, file_v1 f, run_v1 r WHERE r.host_id = ? AND f.filepath_id = ? AND f.filesize = ? AND f.filetime = ? AND f.run_id = r.id AND s.id = f.filesha_id ORDER BY r.starttime DESC LIMIT 1"
 
-    restoreList_select_all = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime, s.filesha FROM file_v1 f JOIN filepath_v1 p ON p.id = f.filepath_id JOIN filesha s ON s.id = f.filesha_id WHERE f.run_id = ?"
+    restoreList_select_all = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime, s.filesha FROM file_v1 f JOIN filepath_v1 p ON p.id = f.filepath_id JOIN filesha_v1 s ON s.id = f.filesha_id WHERE f.run_id = ?"
 
     restoreList_select_subject = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime, s.filesha FROM file_v1 f JOIN filepath_v1 p ON p.id = f.filepath_id JOIN filesha_v1 s ON s.id = f.filesha_id WHERE f.run_id = ? AND f.filepath LIKE ?||'%'"
     
