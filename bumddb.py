@@ -233,9 +233,9 @@ class DirectoryTable (Table):
         "DROP TABLE IF EXISTS directory"
     ]
 
-    restoreList_select_all = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime FROM directory f, filepath p WHERE d.run_id = ? AND d.filepath_id = f.id"
-
-    restoreList_select_subject = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime FROM directory f, filepath p WHERE d.run_id = ? AND f.filepath LIKE ?||'%' AND d.filepath_id = f.id"
+    restoreList_select_all = "SELECT p.filepath, d.fileowner, d.filegroup, d.filemode, d.filetime FROM directory d JOIN filepath p ON d.filepath_id = p.id WHERE d.run_id = ?"
+    
+    restoreList_select_subject = "SELECT p.filepath, d.fileowner, d.filegroup, d.filemode, d.filetime FROM directory d JOIN filepath p ON d.filepath_id = p.id WHERE d.run_id = ? AND p.filepath LIKE ?||'%'"
     
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
         self.dbh = dbh
@@ -362,9 +362,9 @@ class FileTable (Table):
 
     getExistingRecord_select = "SELECT s.filesha FROM filesha s, file f, run r WHERE r.host_id = ? AND f.filepath_id = ? AND f.filesize = ? AND f.filetime = ? AND f.run_id = r.id AND s.id = f.filesha_id ORDER BY r.starttime DESC LIMIT 1"
 
-    restoreList_select_all = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode f.filetime, s.filesha FROM file f JOIN filepath p ON p.id = f.filepath_id JOIN filesha s ON s.id = f.filesha_id WHERE f.run_id = ?"
+    restoreList_select_all = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime, s.filesha FROM file f JOIN filepath p ON p.id = f.filepath_id JOIN filesha s ON s.id = f.filesha_id WHERE f.run_id = ?"
 
-    restoreList_select_subject = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode f.filetime, s.filesha FROM file f JOIN filepath p ON p.id = f.filepath_id JOIN filesha s ON s.id = f.filesha_id WHERE f.run_id = ? AND f.filepath LIKE ?||'%'"
+    restoreList_select_subject = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime, s.filesha FROM file f JOIN filepath p ON p.id = f.filepath_id JOIN filesha s ON s.id = f.filesha_id WHERE f.run_id = ? AND f.filepath LIKE ?||'%'"
     
     
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
