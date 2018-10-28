@@ -492,7 +492,8 @@ class FileTable (Table):
     getId_insert = "INSERT INTO file_v1 (run_id, filepath_id, fileowner, filegroup, filemode, filesize, filetime, filesha_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 
     createTable_list = [
-        "CREATE TABLE IF NOT EXISTS file_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER REFERENCES run(id), filepath_id INTEGER REFERENCES filepath(id), fileowner INTEGER, filegroup INTEGER, filemode INTEGER, filesize INTEGER, filetime INTEGER, filesha_id INTEGER REFERENCES filesha(id))"
+        "CREATE TABLE IF NOT EXISTS file_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER REFERENCES run(id), filepath_id INTEGER REFERENCES filepath(id), fileowner INTEGER, filegroup INTEGER, filemode INTEGER, filesize INTEGER, filetime INTEGER, filesha_id INTEGER REFERENCES filesha(id))",
+        "CREATE INDEX IF NOT EXISTS file_v1_idx ON file_v1(filepath_id, filesize, filetime)"
     ]
     
     dropTable_list = [
