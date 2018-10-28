@@ -319,10 +319,12 @@ class DirectoryTable (Table):
     getId_insert = "INSERT INTO directory_v1 (run_id, filepath_id, fileowner, filegroup, filemode, filetime) VALUES (?, ?, ?, ?, ?, ?)"
 
     createTable_list = [
-        "CREATE TABLE IF NOT EXISTS directory_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER REFERENCES run(id), filepath_id INTEGER REFERENCES filepath(id), fileowner INTEGER, filegroup INTEGER, filemode INTEGER, filetime INTEGER)"
+        "CREATE TABLE IF NOT EXISTS directory_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER REFERENCES run(id), filepath_id INTEGER REFERENCES filepath(id), fileowner INTEGER, filegroup INTEGER, filemode INTEGER, filetime INTEGER)",
+        "CREATE INDEX IF NOT EXISTS directory_v1_idx ON directory_v1(filepath_id, fileowner, filegroup, filemode, filetime)"
     ]
 
     dropTable_list = [
+        "DROP INDEX IF EXISTS directory_v1_idx",
         "DROP TABLE IF EXISTS directory_v1"
     ]
 
@@ -493,10 +495,11 @@ class FileTable (Table):
 
     createTable_list = [
         "CREATE TABLE IF NOT EXISTS file_v1 (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER REFERENCES run(id), filepath_id INTEGER REFERENCES filepath(id), fileowner INTEGER, filegroup INTEGER, filemode INTEGER, filesize INTEGER, filetime INTEGER, filesha_id INTEGER REFERENCES filesha(id))",
-        "CREATE INDEX IF NOT EXISTS file_v1_idx ON file_v1(filepath_id, filesize, filetime)"
+        "CREATE INDEX IF NOT EXISTS file_v1_idx ON file_v1(filepath_id, filesize, filetime, run_id, fileowner, filegroup, filemode, filesha_id)"
     ]
     
     dropTable_list = [
+        "DROP INDEX IF EXISTS file_v1_idx",
         "DROP TABLE IF EXISTS file_v1"
     ]
 
