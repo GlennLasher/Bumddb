@@ -474,7 +474,7 @@ class LinkTable (Table):
                 yield {'filepath'  : result[0],
                        'destpath'  : result[1]}
         else:
-            for subject in subjects:
+            for subject in subjectlist:
                 cursor.execute(self.restoreList_select_subject, (runId, subject))
                 for result in cursor:
                     yield {'filepath'  : result[0],
@@ -583,7 +583,7 @@ class FileTable (Table):
                        'filetime'  : result[4],
                        'filesha'   : result[5]}
         else:
-            for subject in subjects:
+            for subject in subjectlist:
                 cursor.execute(self.restoreList_select_subject, (runId, subject))
                 for result in cursor:
                     yield {'filepath'  : result[0],
