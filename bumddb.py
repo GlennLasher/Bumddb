@@ -380,7 +380,7 @@ class DirectoryTable (Table):
                        'filemode'  : result[3],
                        'filetime'  : result[4]}
         else:
-            for subject in subjects:
+            for subject in subjectlist:
                 cursor.execute(self.restoreList_select_subject, (runId, subject))
                 for result in cursor:
                     yield {'filepath'  : result[0],
