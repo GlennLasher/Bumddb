@@ -507,7 +507,7 @@ class FileTable (Table):
 
     restoreList_select_all = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime, s.filesha FROM file_v1 f JOIN filepath_v1 p ON p.id = f.filepath_id JOIN filesha_v1 s ON s.id = f.filesha_id WHERE f.run_id = ?"
 
-    restoreList_select_subject = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime, s.filesha FROM file_v1 f JOIN filepath_v1 p ON p.id = f.filepath_id JOIN filesha_v1 s ON s.id = f.filesha_id WHERE f.run_id = ? AND f.filepath LIKE ?||'%'"
+    restoreList_select_subject = "SELECT p.filepath, f.fileowner, f.filegroup, f.filemode, f.filetime, s.filesha FROM file_v1 f JOIN filepath_v1 p ON p.id = f.filepath_id JOIN filesha_v1 s ON s.id = f.filesha_id WHERE f.run_id = ? AND p.filepath LIKE ?||'%'"
     
     
     def __init__(self, dbh, readOnly = False, create = False, reset = False):
